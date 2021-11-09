@@ -1,104 +1,32 @@
 package lambda
 
 import (
-	"errors"
-	"time"
+	"fmt"
 
-	"github.com/elvenworks/lambda-conector/internal/delivery/worker/publisher"
-	"github.com/elvenworks/lambda-conector/internal/delivery/worker/subscriber"
-	pubsub "github.com/elvenworks/lambda-conector/internal/driver/lambda"
-	"github.com/sirupsen/logrus"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/elvenworks/lambda-conector/internal/delivery"
 )
 
-type Secret struct {
-	JsonCredentials []byte
-}
+func GetLastLambdaRun(domain string) (result []byte, err error) {
 
-type Pubsub struct {
-	config    *pubsub.Config
-	publisher publisher.IPublisher
-}
-
-func InitPubsub(secret Secret) (p *Pubsub, err error) {
-	config, err := pubsub.NewConfig(secret.JsonCredentials)
-
+	config, err := delivery.ConfigureAWSLambda(domain)
 	if err != nil {
-		logrus.Errorf("Failed to send message to pubsub, err: %s\n", err)
 		return nil, err
 	}
 
-	return &Pubsub{
-		config: config,
-	}, nil
-}
-
-func (p *Pubsub) Publish(topic string, message []byte, attributes map[string]string) error {
-
-	if p.publisher == nil {
-		publisher, err := publisher.NewPublisher(p.config)
-
-		if err != nil {
-			return err
-		}
-
-		p.publisher = publisher
-	}
-
-	err := p.publisher.Publish(topic, message, attributes)
-
+	client, err := delivery.GetAWSLambdaClient(config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
-
-}
-
-func (p *Pubsub) PublishAndSubscriptionOnce(topic string, message []byte) error {
-	publisher, err := publisher.NewPublisher(p.config)
+	resultOutput, err := client.GetFunction(&lambda.GetFunctionInput{
+		FunctionName: &config.FunctionName,
+	})
 	if err != nil {
-		return err
+		return nil, err
 	}
+	fmt.Println(resultOutput)
+	// TODO: Implementar busca da ultima execução do lambda e o status
 
-	err = publisher.Publish(topic, message, nil)
-	if err != nil {
-		return err
-	}
-
-	clientSubscriber, err := subscriber.NewClientSubscriber(p.config)
-	if err != nil {
-		return err
-	}
-
-	msg, err := clientSubscriber.Subscription(topic)
-	if err != nil {
-		return err
-	}
-
-	if msg == nil {
-		return errors.New("any message has been consumed")
-	}
-
-	logrus.Info("Message consumed right after being produced: ", msg)
-
-	return nil
-}
-
-func (p *Pubsub) SubscriptionNack(topic string, timeout time.Duration) error {
-	clientSubscriber, err := subscriber.NewClientSubscriber(p.config)
-	if err != nil {
-		return err
-	}
-
-	success, err := clientSubscriber.SubscriptionNack(topic, timeout)
-	if err != nil {
-		return err
-	}
-
-	if !success {
-		return errors.New("any message has been consumed")
-	}
-
-	return nil
-
+	return nil, nil
 }
