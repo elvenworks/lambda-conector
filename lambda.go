@@ -17,12 +17,12 @@ type LambdaParam struct {
 	Period int32
 }
 
-func GetLastLambdaRun(lambdaParam LambdaParam) (result []byte, err error) {
+func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
 
 	config, err := delivery.ConfigureAWSLambda(lambdaParam.Domain, lambdaParam.Period)
 	if err != nil {
 		log.Fatalf("unable to get AWS config, %v", err)
-		return nil, err
+		return err
 	}
 	// fmt.Println(config)
 	// client, err := delivery.GetAWSLambdaClient(config)
@@ -41,11 +41,11 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (result []byte, err error) {
 	cliCW, err := delivery.GetAWSCloudWatchClient(config)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
-		return nil, err
+		return err
 	}
 	// fmt.Println(cliCW)
 	endTime := time.Now()
-	startTime := time.Now().Add(time.Second * 60 * -1)
+	startTime := time.Now().Add(time.Minute * 1 * -1)
 	id := "e1"
 	output2, err := cliCW.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
 		StartTime: &startTime,
@@ -66,16 +66,21 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (result []byte, err error) {
 	})
 	if err != nil {
 		log.Fatalf("unable to get metric data, %v", err)
-		return nil, err
+		return err
 	}
 
+	if len(output2.MetricDataResults[0].Values) == 0 {
+		return nil
+	}
+	// fmt.Println(len(output2.MetricDataResults))
 	lastTimestamp := output2.MetricDataResults[0].Timestamps[0]
 	lastErr := output2.MetricDataResults[0].Values[0]
-	if lastErr > 0 {
+	fmt.Println(lastErr)
+	if lastErr != 0 {
 		cliCWL, err := delivery.GetAWSCloudWatchLogsClient(config)
 		if err != nil {
 			log.Fatalf("unable to get cloudwatchlogs client, %v", err)
-			return nil, err
+			return err
 		}
 
 		logPointer := "ERROR"
@@ -84,12 +89,12 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (result []byte, err error) {
 		})
 		if err != nil {
 			log.Fatalf("unable to get cloudwatch logs, %v", err)
-			return nil, err
+			return err
 		}
 		fmt.Println(outputLog)
 	}
 	fmt.Println(lastTimestamp)
 	fmt.Println(lastErr)
 
-	return []byte("OK!"), nil
+	return nil
 }

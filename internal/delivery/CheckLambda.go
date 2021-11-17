@@ -98,6 +98,6 @@ func ConfigureAWSLambda(domain string, periodicidade int32) (*LambdaConfig, erro
 		Period:          periodicidade,
 		Namespace:       "AWS/Lambda",
 		MetricName:      "Errors",
-		Stat:            "Average",
+		Stat:            "Sample",
 	}, nil
 }
