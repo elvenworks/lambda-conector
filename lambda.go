@@ -1,74 +1,95 @@
 package lambda
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/delivery"
 )
 
-func GetLastLambdaRun(domain string, periodicidade int64, domainSettings map[string]string) (result []byte, err error) {
+type LambdaParam struct {
+	Domain string
+	Period int32
+}
 
-	config, err := delivery.ConfigureAWSLambda(domain, periodicidade, domainSettings)
+func GetLastLambdaRun(lambdaParam LambdaParam) (result []byte, err error) {
+
+	config, err := delivery.ConfigureAWSLambda(lambdaParam.Domain, lambdaParam.Period)
 	if err != nil {
+		log.Fatalf("unable to get AWS config, %v", err)
 		return nil, err
 	}
-
-	client, err := delivery.GetAWSLambdaClient(config)
-	if err != nil {
-		return nil, err
-	}
-
-	resultOutput, err := client.GetFunction(&lambda.GetFunctionInput{
-		FunctionName: &config.FunctionName,
-	})
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(resultOutput)
+	// fmt.Println(config)
+	// client, err := delivery.GetAWSLambdaClient(config)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(client)
+	// resultOutput, err := client.GetFunction(context.TODO(), &lambda.GetFunctionInput{
+	// 	FunctionName: &config.FunctionName,
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(resultOutput)
 
 	cliCW, err := delivery.GetAWSCloudWatchClient(config)
 	if err != nil {
+		log.Fatalf("unable to get cloudwatch client, %v", err)
+		return nil, err
+	}
+	// fmt.Println(cliCW)
+	endTime := time.Now()
+	startTime := time.Now().Add(time.Second * 60 * -1)
+	id := "e1"
+	output2, err := cliCW.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
+		StartTime: &startTime,
+		EndTime:   &endTime,
+		MetricDataQueries: []types.MetricDataQuery{
+			types.MetricDataQuery{
+				Id: &id,
+				MetricStat: &types.MetricStat{
+					Metric: &types.Metric{
+						MetricName: &config.MetricName,
+						Namespace:  &config.Namespace,
+					},
+					Period: &lambdaParam.Period,
+					Stat:   &config.Stat,
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalf("unable to get metric data, %v", err)
 		return nil, err
 	}
 
-	constFuncName := "FunctionName"
-	req, output := cliCW.GetMetricStatisticsRequest(&cloudwatch.GetMetricStatisticsInput{
-		StartTime:  &time.Time{},
-		EndTime:    &time.Time{},
-		Namespace:  &config.Namespace,
-		MetricName: &config.MetricName, //Invocations
-		Period:     &periodicidade,
-		Dimensions: []*cloudwatch.Dimension{&cloudwatch.Dimension{
-			Name:  &constFuncName,
-			Value: &config.FunctionName,
-		}},
-	})
-	err = req.Send()
-	if err != nil {
-		fmt.Println(err)
-	}
+	lastTimestamp := output2.MetricDataResults[0].Timestamps[0]
+	lastErr := output2.MetricDataResults[0].Values[0]
+	if lastErr > 0 {
+		cliCWL, err := delivery.GetAWSCloudWatchLogsClient(config)
+		if err != nil {
+			log.Fatalf("unable to get cloudwatchlogs client, %v", err)
+			return nil, err
+		}
 
-	output2, err := cliCW.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
-		StartTime:  &time.Time{},
-		EndTime:    &time.Time{},
-		Namespace:  &config.Namespace,
-		MetricName: &config.MetricName, //Invocations
-		Period:     &periodicidade,
-		Dimensions: []*cloudwatch.Dimension{&cloudwatch.Dimension{
-			Name:  &constFuncName,
-			Value: &config.FunctionName,
-		}},
-	})
-	if err != nil {
-		fmt.Println(err)
+		logPointer := "ERROR"
+		outputLog, err := cliCWL.GetLogRecord(context.TODO(), &cloudwatchlogs.GetLogRecordInput{
+			LogRecordPointer: &logPointer,
+		})
+		if err != nil {
+			log.Fatalf("unable to get cloudwatch logs, %v", err)
+			return nil, err
+		}
+		fmt.Println(outputLog)
 	}
-
-	fmt.Println(req)
-	fmt.Println(output)
-	fmt.Println(output2)
+	fmt.Println(lastTimestamp)
+	fmt.Println(lastErr)
 
 	return []byte("OK!"), nil
 }

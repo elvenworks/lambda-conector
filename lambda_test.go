@@ -7,9 +7,7 @@ import (
 
 func TestGetLastLambdaRun(t *testing.T) {
 	type args struct {
-		domain         string
-		periodicidade  int64
-		domainSettings map[string]string
+		lambdaParam LambdaParam
 	}
 	tests := []struct {
 		name       string
@@ -21,7 +19,7 @@ func TestGetLastLambdaRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, err := GetLastLambdaRun(tt.args.domain, tt.args.periodicidade, tt.args.domainSettings)
+			gotResult, err := GetLastLambdaRun(tt.args.lambdaParam)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetLastLambdaRun() error = %v, wantErr %v", err, tt.wantErr)
 				return
