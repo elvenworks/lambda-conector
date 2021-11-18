@@ -59,14 +59,15 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *LambdaConfig) (*cloudwatchlogs.Cli
 }
 
 type LambdaConfig struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	Region          string
-	Namespace       string
-	FunctionName    string
-	Period          int32
-	MetricName      string
-	Stat            string
+	AccessKeyID       string
+	SecretAccessKey   string
+	Region            string
+	Namespace         string
+	FunctionName      string
+	Period            int32
+	MetricErrors      string
+	MetricInvocations string
+	Stat              string
 }
 
 func ConfigureAWSLambda(domain string, periodicidade int32) (*LambdaConfig, error) {
@@ -91,13 +92,14 @@ func ConfigureAWSLambda(domain string, periodicidade int32) (*LambdaConfig, erro
 	functionName := config[1]
 
 	return &LambdaConfig{
-		AccessKeyID:     auth[0],
-		SecretAccessKey: auth[1],
-		Region:          region,
-		FunctionName:    functionName,
-		Period:          periodicidade,
-		Namespace:       "AWS/Lambda",
-		MetricName:      "Errors",
-		Stat:            "Sample",
+		AccessKeyID:       auth[0],
+		SecretAccessKey:   auth[1],
+		Region:            region,
+		FunctionName:      functionName,
+		Period:            periodicidade,
+		Namespace:         "AWS/Lambda",
+		MetricErrors:      "Errors",
+		MetricInvocations: "Invocations",
+		Stat:              "Sum",
 	}, nil
 }
