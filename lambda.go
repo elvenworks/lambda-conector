@@ -3,18 +3,42 @@ package lambda
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/delivery"
 )
 
+func init() {
+	sess, err := session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{
+			Region: aws.String("us-east-1"),
+		},
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	cwl = cloudwatchlogs.New(sess)
+
+}
+
+var (
+	ccw *cloudwatch.Client
+	cwl *cloudwatchlogs.CloudWatchLogs
+)
+
 type LambdaParam struct {
-	Domain string
-	Period int32
+	Domain       string
+	Period       int32
+	LogGroupName string
 }
 
 func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
@@ -24,31 +48,18 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
 		log.Fatalf("unable to get AWS config, %v", err)
 		return err
 	}
-	// fmt.Println(config)
-	// client, err := delivery.GetAWSLambdaClient(config)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(client)
-	// resultOutput, err := client.GetFunction(context.TODO(), &lambda.GetFunctionInput{
-	// 	FunctionName: &config.FunctionName,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(resultOutput)
 
-	cliCW, err := delivery.GetAWSCloudWatchClient(config)
+	ccw, err = delivery.GetAWSCloudWatchClient(config)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
 		return err
 	}
-	// fmt.Println(cliCW)
+
 	endTime := time.Now()
 	startTime := time.Now().Add(time.Hour * 24 * -1)
 	id1, id2 := "e1", "e2"
 
-	output2, err := cliCW.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
+	output2, err := ccw.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
 		StartTime: &startTime,
 		EndTime:   &endTime,
 		MetricDataQueries: []types.MetricDataQuery{
@@ -82,41 +93,50 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
 	}
 
 	if len(output2.MetricDataResults[0].Values) == 0 {
-
 		if len(output2.MetricDataResults[1].Timestamps) == 0 {
-
-			return errors.New("the last run still results in error")
+			return errors.New("no invocations today")
 		} else {
 			return nil
 		}
-
 	}
-	// fmt.Println(len(output2.MetricDataResults))
-	lastTimestamp := output2.MetricDataResults[0].Timestamps[0]
+
 	lastErr := output2.MetricDataResults[0].Values[0]
-	fmt.Println(lastErr)
 	if lastErr != 0 {
-		txtError := "timestamp: "
-		return errors.New("the last run results in error, " + txtError + lastTimestamp.String())
-
-		// cliCWL, err := delivery.GetAWSCloudWatchLogsClient(config)
-		// if err != nil {
-		// 	log.Fatalf("unable to get cloudwatchlogs client, %v", err)
-		// 	return err
-		// }
-
-		// logPointer := "ERROR"
-		// outputLog, err := cliCWL.GetLogRecord(context.TODO(), &cloudwatchlogs.GetLogRecordInput{
-		// 	LogRecordPointer: &logPointer,
-		// })
-		// if err != nil {
-		// 	log.Fatalf("unable to get cloudwatch logs, %v", err)
-		// 	return err
-		// }
-		// fmt.Println(outputLog)
+		message, err := getCWErrorLogMessage(lambdaParam.LogGroupName)
+		if err != nil {
+			log.Fatalf("unable to get cloudwatchlogs client, %v", err)
+			return err
+		}
+		return errors.New("the last run results in error, " + message)
 	}
-	// fmt.Println(lastTimestamp)
-	// fmt.Println(lastErr)
 
 	return nil
+}
+
+func getCWErrorLogMessage(logGroupName string) (string, error) {
+	output, err := cwl.DescribeLogStreams(&cloudwatchlogs.DescribeLogStreamsInput{
+		LogGroupName: &logGroupName,
+		Descending:   aws.Bool(true),
+	})
+	if err != nil {
+		log.Fatalf("unable to get cloudwatch logs, %v", err)
+		return "unable to get cloudwatch logs", err
+	}
+
+	output2, err := cwl.GetLogEvents(&cloudwatchlogs.GetLogEventsInput{
+		LogGroupName:  &logGroupName,
+		LogStreamName: output.LogStreams[0].LogStreamName,
+	})
+	if err != nil {
+		log.Fatalf("unable to get cloudwatch logs, %v", err)
+		return "unable to get cloudwatch logs", err
+	}
+
+	eventsSlice := output2.Events
+	for i := 0; i < len(eventsSlice); i++ {
+		if strings.Contains(*eventsSlice[i].Message, "ERROR") {
+			return *eventsSlice[i].Message, nil
+		}
+	}
+	return "error log not found", errors.New("error log not found")
 }
