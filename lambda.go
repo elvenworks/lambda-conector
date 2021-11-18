@@ -10,15 +10,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/delivery"
 )
 
-func init() {
+func initSessionV1(config delivery.LambdaConfig) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
-			Region: aws.String("us-east-1"),
+			Region:      aws.String(config.Region),
+			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
 		},
 	})
 
@@ -48,6 +50,8 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
 		log.Fatalf("unable to get AWS config, %v", err)
 		return err
 	}
+
+	initSessionV1(*config)
 
 	ccw, err = delivery.GetAWSCloudWatchClient(config)
 	if err != nil {

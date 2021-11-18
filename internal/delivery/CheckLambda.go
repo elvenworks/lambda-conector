@@ -47,7 +47,7 @@ func GetAWSCloudWatchClient(lambdaConfig *LambdaConfig) (*cloudwatch.Client, err
 func GetAWSCloudWatchLogsClient(lambdaConfig *LambdaConfig) (*cloudwatchlogs.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-east-1"),
+		config.WithRegion(lambdaConfig.Region),
 	)
 	if err != nil {
 		log.Fatalf("unable to load Cloudwatch Logs SDK config, %v", err)
