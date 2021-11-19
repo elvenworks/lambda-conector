@@ -23,13 +23,10 @@ func initSessionV1(config delivery.LambdaConfig) {
 			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
 		},
 	})
-
 	if err != nil {
 		panic(err)
 	}
-
 	cwl = cloudwatchlogs.New(sess)
-
 }
 
 var (
