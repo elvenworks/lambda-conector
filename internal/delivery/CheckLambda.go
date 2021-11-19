@@ -10,10 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
 // // domain: account:password/region@functionName
-func GetAWSLambdaClient(lambdaConfig *LambdaConfig) (*lambda.Client, error) {
+func GetAWSLambdaClient(lambdaConfig *domain.LambdaConfig) (*lambda.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion("us-east-1"),
@@ -29,7 +30,7 @@ func GetAWSLambdaClient(lambdaConfig *LambdaConfig) (*lambda.Client, error) {
 }
 
 // // domain: account:password/region@functionName
-func GetAWSCloudWatchClient(lambdaConfig *LambdaConfig) (*cloudwatch.Client, error) {
+func GetAWSCloudWatchClient(lambdaConfig *domain.LambdaConfig) (*cloudwatch.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion("us-east-1"),
@@ -44,7 +45,7 @@ func GetAWSCloudWatchClient(lambdaConfig *LambdaConfig) (*cloudwatch.Client, err
 }
 
 // // domain: account:password/region@functionName
-func GetAWSCloudWatchLogsClient(lambdaConfig *LambdaConfig) (*cloudwatchlogs.Client, error) {
+func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchlogs.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(lambdaConfig.Region),
@@ -58,27 +59,15 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *LambdaConfig) (*cloudwatchlogs.Cli
 	return scl, nil
 }
 
-type LambdaConfig struct {
-	AccessKeyID       string
-	SecretAccessKey   string
-	Region            string
-	Namespace         string
-	FunctionName      string
-	Period            int32
-	MetricErrors      string
-	MetricInvocations string
-	Stat              string
-}
-
-func ConfigureAWSLambda(domain string, periodicidade int32) (*LambdaConfig, error) {
-	// Extract domain params
-	splited := strings.LastIndex(domain, "/")
+func ConfigureAWSLambda(host string, period int32) (*domain.LambdaConfig, error) {
+	// Extract host params
+	splited := strings.LastIndex(host, "/")
 	if splited == 0 {
-		return nil, errors.New("invalid domain format")
+		return nil, errors.New("invalid host format")
 	}
 
-	auth := strings.Split(domain[0:splited], ":")
-	config := strings.Split(domain[splited+1:], "@")
+	auth := strings.Split(host[0:splited], ":")
+	config := strings.Split(host[splited+1:], "@")
 
 	if len(auth) != 2 {
 		return nil, errors.New("invalid authorization format")
@@ -91,15 +80,16 @@ func ConfigureAWSLambda(domain string, periodicidade int32) (*LambdaConfig, erro
 	region := config[0]
 	functionName := config[1]
 
-	return &LambdaConfig{
+	return &domain.LambdaConfig{
 		AccessKeyID:       auth[0],
 		SecretAccessKey:   auth[1],
 		Region:            region,
 		FunctionName:      functionName,
-		Period:            periodicidade,
+		Period:            period,
 		Namespace:         "AWS/Lambda",
 		MetricErrors:      "Errors",
 		MetricInvocations: "Invocations",
 		Stat:              "Sum",
 	}, nil
+
 }

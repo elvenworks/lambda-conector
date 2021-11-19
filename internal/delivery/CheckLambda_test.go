@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
 func TestConfigureAWSLambda(t *testing.T) {
@@ -16,7 +17,7 @@ func TestConfigureAWSLambda(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *LambdaConfig
+		want    *domain.LambdaConfig
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -37,7 +38,7 @@ func TestConfigureAWSLambda(t *testing.T) {
 
 func TestGetAWSLambdaClient(t *testing.T) {
 	type args struct {
-		lambdaConfig *LambdaConfig
+		lambdaConfig *domain.LambdaConfig
 	}
 	tests := []struct {
 		name    string
@@ -63,7 +64,7 @@ func TestGetAWSLambdaClient(t *testing.T) {
 
 func TestGetAWSCloudWatchClient(t *testing.T) {
 	type args struct {
-		lambdaConfig *LambdaConfig
+		lambdaConfig *domain.LambdaConfig
 	}
 	tests := []struct {
 		name    string

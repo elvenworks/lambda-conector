@@ -14,9 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/delivery"
+	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
-func initSessionV1(config delivery.LambdaConfig) {
+func initSessionV1(config domain.LambdaConfig) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
 			Region:      aws.String(config.Region),

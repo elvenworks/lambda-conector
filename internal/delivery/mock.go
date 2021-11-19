@@ -1,0 +1,17 @@
+package delivery
+
+import (
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/stretchr/testify/mock"
+)
+
+type LambdaDeliveryMock struct {
+	mock.Mock
+}
+
+func (m LambdaDeliveryMock) GetAWSLambdaClient(config *domain.LambdaConfig) (*lambda.Client, error) {
+	args := m.Called(config)
+
+	return args.Get(0).(*lambda.Client), args.Error(1)
+}
