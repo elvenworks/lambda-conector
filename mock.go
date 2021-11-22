@@ -1,13 +1,22 @@
 package lambda
 
-import "github.com/stretchr/testify/mock"
+import (
+	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/stretchr/testify/mock"
+)
 
 type LambdaMock struct {
 	mock.Mock
 }
 
-func (m LambdaMock) GetLastLambdaRun(param LambdaParam) error {
-	args := m.Called(param)
+func (m LambdaMock) GetLastLambdaRunMock(config domain.LambdaConfig) (*domain.LambdaLastRun, error) {
+	args := m.Called(config)
 
-	return args.Error(0)
+	return args.Get(0).(*domain.LambdaLastRun), args.Error(1)
+}
+
+func (m LambdaMock) GetLogsLastErrorRunMock(config domain.LambdaConfig) (string, error) {
+	args := m.Called(config)
+
+	return "", args.Error(1)
 }

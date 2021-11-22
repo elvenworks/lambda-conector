@@ -12,5 +12,4 @@ type ILambda interface {
 	GetAWSLambdaClient(config *domain.LambdaConfig) (*lambda.Client, error)
 	GetAWSCloudwatchClient(config *domain.LambdaConfig) (*cloudwatch.Client, error)
 	GetAWSCloudwatchLogsClient(config *domain.LambdaConfig) (*cloudwatchlogs.Client, error)
-	ConfigureAWSLambda(domain string, periodicidade int32, domainSettings map[string]string) (*domain.LambdaConfig, error)
 }

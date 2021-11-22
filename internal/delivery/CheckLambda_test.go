@@ -5,36 +5,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/elvenworks/lambda-conector/internal/domain"
 )
-
-func TestConfigureAWSLambda(t *testing.T) {
-	type args struct {
-		domain        string
-		periodicidade int32
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *domain.LambdaConfig
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConfigureAWSLambda(tt.args.domain, tt.args.periodicidade)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ConfigureAWSLambda() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConfigureAWSLambda() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestGetAWSLambdaClient(t *testing.T) {
 	type args struct {
@@ -46,7 +20,24 @@ func TestGetAWSLambdaClient(t *testing.T) {
 		want    *lambda.Client
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		// 		{
+		// 			name: "Success",
+		// 			args: args{
+		// 				lambdaConfig: &domain.LambdaConfig{},
+		// 				// 	AccessKeyID:       "account",
+		// 				// 	SecretAccessKey:   "password",
+		// 				// 	Region:            "region",
+		// 				// 	FunctionName:      "functionName",
+		// 				// 	Namespace:         "AWS/Lambda",
+		// 				// 	MetricErrors:      "Errors",
+		// 				// 	MetricInvocations: "Invocations",
+		// 				// 	Stat:              "Sum",
+		// 				// 	Period:            60,
+		// 				// },
+		// 			},
+		// 			want:    LambdaDeliveryMock{},
+		// 			wantErr: false,
+		// 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -83,6 +74,32 @@ func TestGetAWSCloudWatchClient(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetAWSCloudWatchClient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetAWSCloudWatchLogsClient(t *testing.T) {
+	type args struct {
+		lambdaConfig *domain.LambdaConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *cloudwatchlogs.Client
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetAWSCloudWatchLogsClient(tt.args.lambdaConfig)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetAWSCloudWatchLogsClient() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetAWSCloudWatchLogsClient() = %v, want %v", got, tt.want)
 			}
 		})
 	}
