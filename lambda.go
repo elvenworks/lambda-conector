@@ -10,33 +10,31 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/elvenworks/lambda-conector/internal/delivery"
+	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/elvenworks/lambda-conector/internal/driver"
 )
 
-func initSessionV1(config domain.LambdaConfig) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region:      aws.String(config.Region),
-			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-	cwl = cloudwatchlogs.New(sess)
-}
+// func initSessionV1(config domain.LambdaConfig) {
+// 	sess, err := session.NewSessionWithOptions(session.Options{
+// 		Config: aws.Config{
+// 			Region:      aws.String(config.Region),
+// 			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
+// 		},
+// 	})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	cwl = cloudwatchlogs.New(sess)
+// }
 
-var (
-	cwl *cloudwatchlogs.CloudWatchLogs
-)
+// var (
+// 	cwl *cloudwatchlogs.CloudWatchLogs
+// )
 
 func GetLastLambdaRun(config domain.LambdaConfig) (*domain.LambdaLastRun, error) {
 
-	ccw, err := delivery.GetAWSCloudWatchClient(&config)
+	ccw, err := driver.GetAWSCloudWatchClient(&config)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
 		return nil, err
@@ -90,9 +88,13 @@ func GetLastLambdaRun(config domain.LambdaConfig) (*domain.LambdaLastRun, error)
 }
 
 func GetLogsLastErrorRun(config domain.LambdaConfig) (string, error) {
-	initSessionV1(config)
+	cwl, err := driver.GetAWSCloudWatchLogsClientV1(config)
+	if err != nil {
+		log.Fatalf("unable to get cloudwatch client, %v", err)
+		return "", err
+	}
 
-	output, err := cwl.DescribeLogStreams(&cloudwatchlogs.DescribeLogStreamsInput{
+	output, err := cwl.DescribeLogStreams(&cloudwatchlogsV1.DescribeLogStreamsInput{
 		LogGroupName: &config.LogGroupName,
 		Descending:   aws.Bool(true),
 	})
@@ -101,7 +103,7 @@ func GetLogsLastErrorRun(config domain.LambdaConfig) (string, error) {
 		return "", err
 	}
 
-	output2, err := cwl.GetLogEvents(&cloudwatchlogs.GetLogEventsInput{
+	output2, err := cwl.GetLogEvents(&cloudwatchlogsV1.GetLogEventsInput{
 		LogGroupName:  &config.LogGroupName,
 		LogStreamName: output.LogStreams[0].LogStreamName,
 	})

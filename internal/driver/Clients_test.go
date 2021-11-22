@@ -1,4 +1,4 @@
-package delivery
+package driver
 
 import (
 	"reflect"
@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
@@ -100,6 +101,32 @@ func TestGetAWSCloudWatchLogsClient(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetAWSCloudWatchLogsClient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetAWSCloudWatchLogsClientV1(t *testing.T) {
+	type args struct {
+		config domain.LambdaConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *cloudwatchlogsV1.CloudWatchLogs
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetAWSCloudWatchLogsClientV1(tt.args.config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetAWSCloudWatchLogsClientV1() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetAWSCloudWatchLogsClientV1() = %v, want %v", got, tt.want)
 			}
 		})
 	}

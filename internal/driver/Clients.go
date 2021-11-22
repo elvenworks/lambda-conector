@@ -1,4 +1,4 @@
-package delivery
+package driver
 
 import (
 	"context"
@@ -8,6 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
@@ -52,4 +56,18 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchl
 	scl := cloudwatchlogs.NewFromConfig(cfg)
 
 	return scl, nil
+}
+
+func GetAWSCloudWatchLogsClientV1(config domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error) {
+	sess, err := session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{
+			Region:      aws.String(config.Region),
+			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	cwl := cloudwatchlogsV1.New(sess)
+	return cwl, nil
 }
