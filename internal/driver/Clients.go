@@ -2,7 +2,6 @@ package driver
 
 import (
 	"context"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
@@ -21,7 +20,7 @@ func GetAWSLambdaClient(lambdaConfig *domain.LambdaConfig) (*lambda.Client, erro
 		config.WithRegion(lambdaConfig.Region),
 	)
 	if err != nil {
-		log.Fatalf("unable to load Lambda SDK config, %v", err)
+		// log.Fatalf("unable to load Lambda SDK config, %v", err)
 		return nil, err
 	}
 
@@ -36,7 +35,7 @@ func GetAWSCloudWatchClient(lambdaConfig *domain.LambdaConfig) (*cloudwatch.Clie
 		config.WithRegion(lambdaConfig.Region),
 	)
 	if err != nil {
-		log.Fatalf("unable to load Cloudwatch SDK config, %v", err)
+		// log.Fatalf("unable to load Cloudwatch SDK config, %v", err)
 		return nil, err
 	}
 	scw := cloudwatch.NewFromConfig(cfg)
@@ -50,7 +49,7 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchl
 		config.WithRegion(lambdaConfig.Region),
 	)
 	if err != nil {
-		log.Fatalf("unable to load Cloudwatch Logs SDK config, %v", err)
+		// log.Fatalf("unable to load Cloudwatch Logs SDK config, %v", err)
 		return nil, err
 	}
 	scl := cloudwatchlogs.NewFromConfig(cfg)
@@ -58,15 +57,27 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchl
 	return scl, nil
 }
 
-func GetAWSCloudWatchLogsClientV1(config domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region:      aws.String(config.Region),
-			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
-		},
-	})
+func GetAWSCloudWatchLogsClientV1(config *domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error) {
+	var sess *session.Session
+	var err error
+	if len(config.AccessKeyID) == 0 || len(config.SecretAccessKey) == 0 {
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Region: aws.String(config.Region),
+				// Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
+			},
+		})
+	} else {
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Region:      aws.String(config.Region),
+				Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
+			},
+		})
+	}
 	if err != nil {
-		panic(err)
+		// log.Fatalf("unable to load Cloudwatch Logs SDK config, %v", err)
+		return nil, err
 	}
 	cwl := cloudwatchlogsV1.New(sess)
 	return cwl, nil

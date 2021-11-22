@@ -12,5 +12,5 @@ type ILambda interface {
 	GetAWSLambdaClient(config *domain.LambdaConfig) (*lambda.Client, error)
 	GetAWSCloudwatchClient(config *domain.LambdaConfig) (*cloudwatch.Client, error)
 	GetAWSCloudwatchLogsClient(config *domain.LambdaConfig) (*cloudwatchlogs.Client, error)
-	GetAWSCloudWatchLogsClientV1(config domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error)
+	GetAWSCloudWatchLogsClientV1(config *domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error)
 }

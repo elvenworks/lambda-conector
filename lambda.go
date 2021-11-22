@@ -3,7 +3,6 @@ package lambda
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 	"time"
 
@@ -15,28 +14,11 @@ import (
 	"github.com/elvenworks/lambda-conector/internal/driver"
 )
 
-// func initSessionV1(config domain.LambdaConfig) {
-// 	sess, err := session.NewSessionWithOptions(session.Options{
-// 		Config: aws.Config{
-// 			Region:      aws.String(config.Region),
-// 			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
-// 		},
-// 	})
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	cwl = cloudwatchlogs.New(sess)
-// }
-
-// var (
-// 	cwl *cloudwatchlogs.CloudWatchLogs
-// )
-
 func GetLastLambdaRun(config domain.LambdaConfig) (*domain.LambdaLastRun, error) {
 
 	ccw, err := driver.GetAWSCloudWatchClient(&config)
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch client, %v", err)
+		// log.Fatalf("unable to get cloudwatch client, %v", err)
 		return nil, err
 	}
 
@@ -73,7 +55,7 @@ func GetLastLambdaRun(config domain.LambdaConfig) (*domain.LambdaLastRun, error)
 		},
 	})
 	if err != nil {
-		log.Fatalf("unable to get metric data, %v", err)
+		// log.Fatalf("unable to get metric data, %v", err)
 		return nil, err
 	}
 
@@ -88,9 +70,9 @@ func GetLastLambdaRun(config domain.LambdaConfig) (*domain.LambdaLastRun, error)
 }
 
 func GetLogsLastErrorRun(config domain.LambdaConfig) (string, error) {
-	cwl, err := driver.GetAWSCloudWatchLogsClientV1(config)
+	cwl, err := driver.GetAWSCloudWatchLogsClientV1(&config)
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch client, %v", err)
+		// log.Fatalf("unable to get cloudwatch client, %v", err)
 		return "", err
 	}
 
@@ -99,7 +81,7 @@ func GetLogsLastErrorRun(config domain.LambdaConfig) (string, error) {
 		Descending:   aws.Bool(true),
 	})
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch logs, %v", err)
+		// log.Fatalf("unable to get cloudwatch logs streams, %v", err)
 		return "", err
 	}
 
@@ -108,7 +90,7 @@ func GetLogsLastErrorRun(config domain.LambdaConfig) (string, error) {
 		LogStreamName: output.LogStreams[0].LogStreamName,
 	})
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch logs, %v", err)
+		// log.Fatalf("unable to get cloudwatch logs, %v", err)
 		return "", err
 	}
 

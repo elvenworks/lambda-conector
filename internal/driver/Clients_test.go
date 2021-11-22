@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
@@ -21,24 +20,23 @@ func TestGetAWSLambdaClient(t *testing.T) {
 		want    *lambda.Client
 		wantErr bool
 	}{
-		// 		{
-		// 			name: "Success",
-		// 			args: args{
-		// 				lambdaConfig: &domain.LambdaConfig{},
-		// 				// 	AccessKeyID:       "account",
-		// 				// 	SecretAccessKey:   "password",
-		// 				// 	Region:            "region",
-		// 				// 	FunctionName:      "functionName",
-		// 				// 	Namespace:         "AWS/Lambda",
-		// 				// 	MetricErrors:      "Errors",
-		// 				// 	MetricInvocations: "Invocations",
-		// 				// 	Stat:              "Sum",
-		// 				// 	Period:            60,
-		// 				// },
-		// 			},
-		// 			want:    LambdaDeliveryMock{},
-		// 			wantErr: false,
-		// 		},
+		{
+			name: "Success",
+			args: args{
+				lambdaConfig: &domain.LambdaConfig{
+					Region:            "us-east-1",
+					FunctionName:      "stop_start_rds_instance",
+					Namespace:         "AWS/Lambda",
+					LogGroupName:      "/aws/lambda/stop_start_rds_instance",
+					MetricErrors:      "Errors",
+					MetricInvocations: "Invocations",
+					Stat:              "Sum",
+					Period:            60,
+				},
+			},
+			want:    &lambda.Client{},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -47,7 +45,7 @@ func TestGetAWSLambdaClient(t *testing.T) {
 				t.Errorf("GetAWSLambdaClient() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if got == nil {
 				t.Errorf("GetAWSLambdaClient() = %v, want %v", got, tt.want)
 			}
 		})
@@ -64,7 +62,23 @@ func TestGetAWSCloudWatchClient(t *testing.T) {
 		want    *cloudwatch.Client
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			args: args{
+				lambdaConfig: &domain.LambdaConfig{
+					Region:            "us-east-1",
+					FunctionName:      "stop_start_rds_instance",
+					Namespace:         "AWS/Lambda",
+					LogGroupName:      "/aws/lambda/stop_start_rds_instance",
+					MetricErrors:      "Errors",
+					MetricInvocations: "Invocations",
+					Stat:              "Sum",
+					Period:            60,
+				},
+			},
+			want:    &cloudwatch.Client{},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -73,8 +87,8 @@ func TestGetAWSCloudWatchClient(t *testing.T) {
 				t.Errorf("GetAWSCloudWatchClient() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAWSCloudWatchClient() = %v, want %v", got, tt.want)
+			if got == nil {
+				t.Errorf("GetAWSLambdaClient() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -90,7 +104,23 @@ func TestGetAWSCloudWatchLogsClient(t *testing.T) {
 		want    *cloudwatchlogs.Client
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			args: args{
+				lambdaConfig: &domain.LambdaConfig{
+					Region:            "us-east-1",
+					FunctionName:      "stop_start_rds_instance",
+					Namespace:         "AWS/Lambda",
+					LogGroupName:      "/aws/lambda/stop_start_rds_instance",
+					MetricErrors:      "Errors",
+					MetricInvocations: "Invocations",
+					Stat:              "Sum",
+					Period:            60,
+				},
+			},
+			want:    &cloudwatchlogs.Client{},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -99,8 +129,8 @@ func TestGetAWSCloudWatchLogsClient(t *testing.T) {
 				t.Errorf("GetAWSCloudWatchLogsClient() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAWSCloudWatchLogsClient() = %v, want %v", got, tt.want)
+			if got == nil {
+				t.Errorf("GetAWSLambdaClient() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -108,7 +138,7 @@ func TestGetAWSCloudWatchLogsClient(t *testing.T) {
 
 func TestGetAWSCloudWatchLogsClientV1(t *testing.T) {
 	type args struct {
-		config domain.LambdaConfig
+		config *domain.LambdaConfig
 	}
 	tests := []struct {
 		name    string
@@ -116,7 +146,23 @@ func TestGetAWSCloudWatchLogsClientV1(t *testing.T) {
 		want    *cloudwatchlogsV1.CloudWatchLogs
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			args: args{
+				config: &domain.LambdaConfig{
+					Region:            "us-east-1",
+					FunctionName:      "stop_start_rds_instance",
+					Namespace:         "AWS/Lambda",
+					LogGroupName:      "/aws/lambda/stop_start_rds_instance",
+					MetricErrors:      "Errors",
+					MetricInvocations: "Invocations",
+					Stat:              "Sum",
+					Period:            60,
+				},
+			},
+			want:    nil,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,8 +171,8 @@ func TestGetAWSCloudWatchLogsClientV1(t *testing.T) {
 				t.Errorf("GetAWSCloudWatchLogsClientV1() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAWSCloudWatchLogsClientV1() = %v, want %v", got, tt.want)
+			if got == nil {
+				t.Errorf("GetAWSLambdaClient() = %v, want %v", got, tt.want)
 			}
 		})
 	}
