@@ -9,14 +9,29 @@ type LambdaMock struct {
 	mock.Mock
 }
 
-func (m LambdaMock) GetLastLambdaRunMock(config domain.LambdaConfig) (*domain.LambdaLastRun, error) {
+func (m LambdaMock) InitLambda(config domain.LambdaConfig) *Lambda {
 	args := m.Called(config)
 
-	return args.Get(0).(*domain.LambdaLastRun), args.Error(1)
+	return args.Get(0).(*Lambda)
 }
 
-func (m LambdaMock) GetLogsLastErrorRunMock(config domain.LambdaConfig) (string, error) {
-	args := m.Called(config)
+func (m LambdaMock) GetConfig() *domain.LambdaConfig {
+	lam := m.InitLambda(domain.LambdaConfig{})
+	args := lam.GetConfig()
 
-	return "", args.Error(1)
+	return args
+}
+
+func (m LambdaMock) GetLastLambdaRunMock() (*domain.LambdaLastRun, error) {
+	lam := m.InitLambda(domain.LambdaConfig{})
+	args, err := lam.GetLastLambdaRun()
+
+	return args, err
+}
+
+func (m LambdaMock) GetLogsLastErrorRunMock() (string, error) {
+	lam := m.InitLambda(domain.LambdaConfig{})
+	args, err := lam.GetLogsLastErrorRun()
+
+	return args, err
 }

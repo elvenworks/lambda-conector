@@ -14,9 +14,15 @@ func TestInitLambda(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *Lambda
+		want *LambdaMock
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success init",
+			args: args{
+				config: domain.LambdaConfig{},
+			},
+			want: &LambdaMock{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -37,7 +43,14 @@ func TestLambda_GetConfig(t *testing.T) {
 		fields fields
 		want   *domain.LambdaConfig
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			fields: fields{
+				config:  domain.LambdaConfig{},
+				Clients: domain.Clients{},
+			},
+			want: &domain.LambdaConfig{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -63,7 +76,15 @@ func TestLambda_GetLastLambdaRun(t *testing.T) {
 		want    *domain.LambdaLastRun
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			fields: fields{
+				config:  domain.LambdaConfig{},
+				Clients: domain.Clients{},
+			},
+			want:    &domain.LambdaLastRun{},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,7 +115,15 @@ func TestLambda_GetLogsLastErrorRun(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			fields: fields{
+				config:  domain.LambdaConfig{},
+				Clients: domain.Clients{},
+			},
+			want:    "",
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
