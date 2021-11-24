@@ -10,60 +10,60 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/elvenworks/lambda-conector/internal/delivery"
+	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/elvenworks/lambda-conector/internal/driver"
 )
 
-func initSessionV1(config delivery.LambdaConfig) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region:      aws.String(config.Region),
-			Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
-		},
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	cwl = cloudwatchlogs.New(sess)
-
+type Lambda struct {
+	Clients domain.Clients
+	config  domain.LambdaConfig
 }
 
-var (
-	ccw *cloudwatch.Client
-	cwl *cloudwatchlogs.CloudWatchLogs
-)
+func InitLambda(config domain.LambdaConfig) *Lambda {
 
-type LambdaParam struct {
-	Domain       string
-	Period       int32
-	LogGroupName string
-}
-
-func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
-
-	config, err := delivery.ConfigureAWSLambda(lambdaParam.Domain, lambdaParam.Period)
+	cl, err := driver.GetAWSLambdaClient(&config)
 	if err != nil {
-		log.Fatalf("unable to get AWS config, %v", err)
-		return err
+		log.Fatalf("unable to get lambda client, %v", err)
 	}
 
-	initSessionV1(*config)
-
-	ccw, err = delivery.GetAWSCloudWatchClient(config)
+	ccw, err := driver.GetAWSCloudWatchClient(&config)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
-		return err
 	}
 
+	ccwl, err := driver.GetAWSCloudWatchLogsClient(&config)
+	if err != nil {
+		log.Fatalf("unable to get cloudwatchlogs client, %v", err)
+	}
+
+	ccwlv1, err := driver.GetAWSCloudWatchLogsClientV1(&config)
+	if err != nil {
+		log.Fatalf("unable to get cloudwatchlogs v1 client, %v", err)
+	}
+
+	return &Lambda{
+		Clients: domain.Clients{
+			Cl:     *cl,
+			Ccw:    *ccw,
+			Ccwl:   *ccwl,
+			Ccwlv1: *ccwlv1,
+		},
+		config: config,
+	}
+}
+
+func (l *Lambda) GetConfig() *domain.LambdaConfig {
+	return &l.config
+}
+
+func (l *Lambda) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
+
 	endTime := time.Now()
-	startTime := time.Now().Add(time.Hour * 24 * -1)
+	startTime := time.Now().Add(time.Second * time.Duration(l.GetConfig().Period) * 2 * -1)
 	id1, id2 := "e1", "e2"
 
-	output2, err := ccw.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
+	output, err := l.Clients.Ccw.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
 		StartTime: &startTime,
 		EndTime:   &endTime,
 		MetricDataQueries: []types.MetricDataQuery{
@@ -71,69 +71,59 @@ func GetLastLambdaRun(lambdaParam LambdaParam) (err error) {
 				Id: &id1,
 				MetricStat: &types.MetricStat{
 					Metric: &types.Metric{
-						MetricName: &config.MetricErrors,
-						Namespace:  &config.Namespace,
+						MetricName: &l.GetConfig().MetricErrors,
+						Namespace:  &l.GetConfig().Namespace,
 					},
-					Period: &lambdaParam.Period,
-					Stat:   &config.Stat,
+					Period: &l.GetConfig().Period,
+					Stat:   &l.GetConfig().Stat,
 				},
 			},
 			{
 				Id: &id2,
 				MetricStat: &types.MetricStat{
 					Metric: &types.Metric{
-						MetricName: &config.MetricInvocations,
-						Namespace:  &config.Namespace,
+						MetricName: &l.GetConfig().MetricInvocations,
+						Namespace:  &l.GetConfig().Namespace,
 					},
-					Period: &lambdaParam.Period,
-					Stat:   &config.Stat,
+					Period: &l.GetConfig().Period,
+					Stat:   &l.GetConfig().Stat,
 				},
 			},
 		},
 	})
 	if err != nil {
 		log.Fatalf("unable to get metric data, %v", err)
-		return err
+		return nil, err
 	}
 
-	if len(output2.MetricDataResults[0].Values) == 0 {
-		if len(output2.MetricDataResults[1].Timestamps) == 0 {
-			return errors.New("no invocations today")
-		} else {
-			return nil
-		}
+	if len(output.MetricDataResults[0].Values) == 0 {
+		return nil, errors.New("no invocations for the period")
 	}
 
-	lastErr := output2.MetricDataResults[0].Values[0]
-	if lastErr != 0 {
-		message, err := getCWErrorLogMessage(lambdaParam.LogGroupName)
-		if err != nil {
-			log.Fatalf("unable to get cloudwatchlogs client, %v", err)
-			return err
-		}
-		return errors.New("the last run results in error, " + message)
-	}
-
-	return nil
+	return &domain.LambdaLastRun{
+		Timestamp:  output.MetricDataResults[0].Timestamps[0],
+		ErrorCount: output.MetricDataResults[0].Values[0],
+	}, nil
 }
 
-func getCWErrorLogMessage(logGroupName string) (string, error) {
-	output, err := cwl.DescribeLogStreams(&cloudwatchlogs.DescribeLogStreamsInput{
-		LogGroupName: &logGroupName,
+func (l *Lambda) GetLogsLastErrorRun() (string, error) {
+
+	output, err := l.Clients.Ccwlv1.DescribeLogStreams(&cloudwatchlogsV1.DescribeLogStreamsInput{
+		LogGroupName: &l.GetConfig().LogGroupName,
 		Descending:   aws.Bool(true),
 	})
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch logs, %v", err)
-		return "unable to get cloudwatch logs", err
+		log.Fatalf("unable to get cloudwatch logs streams, %v", err)
+		return "", err
 	}
 
-	output2, err := cwl.GetLogEvents(&cloudwatchlogs.GetLogEventsInput{
-		LogGroupName:  &logGroupName,
+	output2, err := l.Clients.Ccwlv1.GetLogEvents(&cloudwatchlogsV1.GetLogEventsInput{
+		LogGroupName:  &l.GetConfig().LogGroupName,
 		LogStreamName: output.LogStreams[0].LogStreamName,
 	})
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch logs, %v", err)
-		return "unable to get cloudwatch logs", err
+		return "", err
 	}
 
 	eventsSlice := output2.Events
@@ -142,5 +132,6 @@ func getCWErrorLogMessage(logGroupName string) (string, error) {
 			return *eventsSlice[i].Message, nil
 		}
 	}
-	return "error log not found", errors.New("error log not found")
+	return "", errors.New("error log not found")
+
 }
