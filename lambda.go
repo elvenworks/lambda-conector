@@ -20,24 +20,33 @@ type Lambda struct {
 	config  domain.LambdaConfig
 }
 
-func InitLambda(config domain.LambdaConfig) *Lambda {
+type InitConfig struct {
+	AccessKeyID     string
+	SecretAccessKey string
+	Region          string
+	FunctionName    string
+	Period          int32
+	LogGroupName    string
+}
 
-	cl, err := driver.GetAWSLambdaClient(&config)
+func InitLambda(config InitConfig) *Lambda {
+
+	cl, err := driver.GetAWSLambdaClient(config.Region)
 	if err != nil {
 		log.Fatalf("unable to get lambda client, %v", err)
 	}
 
-	ccw, err := driver.GetAWSCloudWatchClient(&config)
+	ccw, err := driver.GetAWSCloudWatchClient(config.Region)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
 	}
 
-	ccwl, err := driver.GetAWSCloudWatchLogsClient(&config)
+	ccwl, err := driver.GetAWSCloudWatchLogsClient(config.Region)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatchlogs client, %v", err)
 	}
 
-	ccwlv1, err := driver.GetAWSCloudWatchLogsClientV1(&config)
+	ccwlv1, err := driver.GetAWSCloudWatchLogsClientV1(config.AccessKeyID, config.SecretAccessKey, config.Region)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatchlogs v1 client, %v", err)
 	}
@@ -49,7 +58,18 @@ func InitLambda(config domain.LambdaConfig) *Lambda {
 			Ccwl:   *ccwl,
 			Ccwlv1: *ccwlv1,
 		},
-		config: config,
+		config: domain.LambdaConfig{
+			AccessKeyID:       config.AccessKeyID,
+			SecretAccessKey:   config.SecretAccessKey,
+			Region:            config.Region,
+			FunctionName:      config.FunctionName,
+			Period:            config.Period,
+			LogGroupName:      config.LogGroupName,
+			Namespace:         "AWS/Lambda",
+			MetricErrors:      "Errors",
+			MetricInvocations: "Invocations",
+			Stat:              "Sum",
+		},
 	}
 }
 

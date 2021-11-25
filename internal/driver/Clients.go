@@ -12,13 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/elvenworks/lambda-conector/internal/domain"
 )
 
-func GetAWSLambdaClient(lambdaConfig *domain.LambdaConfig) (*lambda.Client, error) {
+func GetAWSLambdaClient(region string) (*lambda.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(lambdaConfig.Region),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		log.Fatalf("unable to load Lambda SDK config, %v", err)
@@ -30,10 +29,10 @@ func GetAWSLambdaClient(lambdaConfig *domain.LambdaConfig) (*lambda.Client, erro
 	return svc, nil
 }
 
-func GetAWSCloudWatchClient(lambdaConfig *domain.LambdaConfig) (*cloudwatch.Client, error) {
+func GetAWSCloudWatchClient(region string) (*cloudwatch.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(lambdaConfig.Region),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		return nil, err
@@ -43,10 +42,10 @@ func GetAWSCloudWatchClient(lambdaConfig *domain.LambdaConfig) (*cloudwatch.Clie
 	return scw, nil
 }
 
-func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchlogs.Client, error) {
+func GetAWSCloudWatchLogsClient(region string) (*cloudwatchlogs.Client, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(lambdaConfig.Region),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		log.Fatalf("unable to load Cloudwatch Logs SDK config, %v", err)
@@ -57,20 +56,20 @@ func GetAWSCloudWatchLogsClient(lambdaConfig *domain.LambdaConfig) (*cloudwatchl
 	return scl, nil
 }
 
-func GetAWSCloudWatchLogsClientV1(config *domain.LambdaConfig) (*cloudwatchlogsV1.CloudWatchLogs, error) {
+func GetAWSCloudWatchLogsClientV1(accessKeyID string, secretAccessKey string, region string) (*cloudwatchlogsV1.CloudWatchLogs, error) {
 	var sess *session.Session
 	var err error
-	if len(config.AccessKeyID) == 0 || len(config.SecretAccessKey) == 0 {
+	if len(accessKeyID) == 0 || len(secretAccessKey) == 0 {
 		sess, err = session.NewSessionWithOptions(session.Options{
 			Config: aws.Config{
-				Region: aws.String(config.Region),
+				Region: aws.String(region),
 			},
 		})
 	} else {
 		sess, err = session.NewSessionWithOptions(session.Options{
 			Config: aws.Config{
-				Region:      aws.String(config.Region),
-				Credentials: credentials.NewStaticCredentials(config.AccessKeyID, config.SecretAccessKey, ""),
+				Region:      aws.String(region),
+				Credentials: credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
 			},
 		})
 	}
