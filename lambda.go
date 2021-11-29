@@ -31,19 +31,9 @@ type InitConfig struct {
 
 func InitLambda(config InitConfig) *Lambda {
 
-	cl, err := driver.GetAWSLambdaClient(config.Region)
-	if err != nil {
-		log.Fatalf("unable to get lambda client, %v", err)
-	}
-
 	ccw, err := driver.GetAWSCloudWatchClient(config.Region)
 	if err != nil {
 		log.Fatalf("unable to get cloudwatch client, %v", err)
-	}
-
-	ccwl, err := driver.GetAWSCloudWatchLogsClient(config.Region)
-	if err != nil {
-		log.Fatalf("unable to get cloudwatchlogs client, %v", err)
 	}
 
 	ccwlv1, err := driver.GetAWSCloudWatchLogsClientV1(config.AccessKeyID, config.SecretAccessKey, config.Region)
@@ -53,9 +43,7 @@ func InitLambda(config InitConfig) *Lambda {
 
 	return &Lambda{
 		Clients: domain.Clients{
-			Cl:     *cl,
 			Ccw:    *ccw,
-			Ccwl:   *ccwl,
 			Ccwlv1: *ccwlv1,
 		},
 		config: domain.LambdaConfig{
