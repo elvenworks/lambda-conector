@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-	"github.com/aws/aws-sdk-go/aws"
+	awssdkv1 "github.com/aws/aws-sdk-go/aws"
 	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/domain"
 	"github.com/elvenworks/lambda-conector/internal/driver"
@@ -31,7 +31,7 @@ type InitConfig struct {
 
 func InitLambda(config InitConfig) *Lambda {
 
-	ccw, err := driver.GetAWSCloudWatchClient(config.Region)
+	ccw, err := driver.GetAWSCloudWatchClient(config.AccessKeyID, config.SecretAccessKey, config.Region)
 	if err != nil {
 		logrus.Error("unable to get cloudwatch client, %v", err)
 	}
@@ -118,7 +118,7 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 
 	output, err := l.Clients.Ccwlv1.DescribeLogStreams(&cloudwatchlogsV1.DescribeLogStreamsInput{
 		LogGroupName: &l.GetConfig().LogGroupName,
-		Descending:   aws.Bool(true),
+		Descending:   awssdkv1.Bool(true),
 	})
 	if err != nil {
 		logrus.Error("unable to get cloudwatch logs streams, %v", err)
