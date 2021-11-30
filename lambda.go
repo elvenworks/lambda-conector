@@ -119,6 +119,7 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 	output, err := l.Clients.Ccwlv1.DescribeLogStreams(&cloudwatchlogsV1.DescribeLogStreamsInput{
 		LogGroupName: &l.GetConfig().LogGroupName,
 		Descending:   awssdkv1.Bool(true),
+		OrderBy:      awssdkv1.String("LastEventTime"),
 	})
 	if err != nil {
 		logrus.Error("unable to get cloudwatch logs streams, %v", err)
