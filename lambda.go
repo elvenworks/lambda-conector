@@ -3,7 +3,6 @@ package lambda
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/elvenworks/lambda-conector/internal/domain"
 	"github.com/elvenworks/lambda-conector/internal/driver"
+	"github.com/sirupsen/logrus"
 )
 
 type Lambda struct {
@@ -33,12 +33,12 @@ func InitLambda(config InitConfig) *Lambda {
 
 	ccw, err := driver.GetAWSCloudWatchClient(config.Region)
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch client, %v", err)
+		logrus.Error("unable to get cloudwatch client, %v", err)
 	}
 
 	ccwlv1, err := driver.GetAWSCloudWatchLogsClientV1(config.AccessKeyID, config.SecretAccessKey, config.Region)
 	if err != nil {
-		log.Fatalf("unable to get cloudwatchlogs v1 client, %v", err)
+		logrus.Error("unable to get cloudwatchlogs v1 client, %v", err)
 	}
 
 	return &Lambda{
@@ -100,7 +100,7 @@ func (l *Lambda) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
 		},
 	})
 	if err != nil {
-		log.Fatalf("unable to get metric data, %v", err)
+		logrus.Error("unable to get metric data, %v", err)
 		return nil, err
 	}
 
@@ -121,7 +121,7 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 		Descending:   aws.Bool(true),
 	})
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch logs streams, %v", err)
+		logrus.Error("unable to get cloudwatch logs streams, %v", err)
 		return "", err
 	}
 
@@ -130,7 +130,7 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 		LogStreamName: output.LogStreams[0].LogStreamName,
 	})
 	if err != nil {
-		log.Fatalf("unable to get cloudwatch logs, %v", err)
+		logrus.Error("unable to get cloudwatch logs, %v", err)
 		return "", err
 	}
 
