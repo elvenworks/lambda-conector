@@ -21,12 +21,13 @@ type Lambda struct {
 }
 
 type InitConfig struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	Region          string
-	FunctionName    string
-	Period          int32
-	LogGroupName    string
+	AccessKeyID      string
+	SecretAccessKey  string
+	Region           string
+	FunctionName     string
+	Period           int32
+	LogGroupName     string
+	FlagSearchPeriod bool
 }
 
 func InitLambda(config InitConfig) *Lambda {
@@ -57,6 +58,7 @@ func InitLambda(config InitConfig) *Lambda {
 			MetricErrors:      "Errors",
 			MetricInvocations: "Invocations",
 			Stat:              "Sum",
+			FlagSearchPeriod:  config.FlagSearchPeriod,
 		},
 	}
 }
@@ -105,7 +107,38 @@ func (l *Lambda) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
 	}
 
 	if len(output.MetricDataResults[0].Values) == 0 {
-		return nil, errors.New("no invocations for the period")
+		if l.GetConfig().FlagSearchPeriod {
+			return nil, errors.New("no invocations for the period")
+		} else {
+			endTime = time.Now()
+			startTime = time.Now().Add(time.Hour * 24 * -1)
+			id1, id2 = "i1", "i2"
+			output, err = l.Clients.Ccw.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
+				StartTime: &startTime,
+				EndTime:   &endTime,
+				MetricDataQueries: []types.MetricDataQuery{
+					{
+						Id: &id1,
+						MetricStat: &types.MetricStat{
+							Metric: &types.Metric{
+								MetricName: &l.GetConfig().MetricErrors,
+								Namespace:  &l.GetConfig().Namespace,
+							},
+							Period: &l.GetConfig().Period,
+							Stat:   &l.GetConfig().Stat,
+						},
+					}},
+			})
+			if err != nil {
+				logrus.Error("unable to get metric data, %v", err)
+				return nil, err
+			}
+
+			return &domain.LambdaLastRun{
+				Timestamp:  output.MetricDataResults[0].Timestamps[0],
+				ErrorCount: output.MetricDataResults[0].Values[0],
+			}, nil
+		}
 	}
 
 	return &domain.LambdaLastRun{

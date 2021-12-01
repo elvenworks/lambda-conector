@@ -18,6 +18,7 @@ type LambdaConfig struct {
 	MetricErrors      string
 	MetricInvocations string
 	Stat              string
+	FlagSearchPeriod  bool
 }
 
 type LambdaLastRun struct {
