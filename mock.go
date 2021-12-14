@@ -14,12 +14,12 @@ func (m LambdaMock) GetConfig() *domain.LambdaConfig {
 	return args.Get(0).(*domain.LambdaConfig)
 }
 
-func (m LambdaMock) GetLastLambdaRunMock() (*domain.LambdaLastRun, error) {
+func (m LambdaMock) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
 	args := m.Called()
 	return args.Get(0).(*domain.LambdaLastRun), args.Error(1)
 }
 
-func (m LambdaMock) GetLogsLastErrorRunMock() (string, error) {
+func (m LambdaMock) GetLogsLastErrorRun() (string, error) {
 	args := m.Called()
 	return args.Get(0).(string), args.Error(1)
 }
