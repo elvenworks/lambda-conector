@@ -174,6 +174,6 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 			return *eventsSlice[i].Message, nil
 		}
 	}
-	return "", errors.New("error log not found")
+	return "", nil
 
 }
