@@ -1,7 +1,7 @@
 package lambda
 
 import (
-	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/elvenworks/lambda-conector/domain"
 	"github.com/stretchr/testify/mock"
 )
 
