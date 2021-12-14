@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	awssdkv1 "github.com/aws/aws-sdk-go/aws"
 	cloudwatchlogsV1 "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/elvenworks/lambda-conector/internal/domain"
+	"github.com/elvenworks/lambda-conector/domain"
 	"github.com/elvenworks/lambda-conector/internal/driver"
 	"github.com/sirupsen/logrus"
 )

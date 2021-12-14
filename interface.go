@@ -1,6 +1,6 @@
 package lambda
 
-import "github.com/elvenworks/lambda-conector/internal/domain"
+import "github.com/elvenworks/lambda-conector/domain"
 
 type ILambda interface {
 	GetConfig() *domain.LambdaConfig
