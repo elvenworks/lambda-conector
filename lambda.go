@@ -71,6 +71,11 @@ func (l *Lambda) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
 
 	endTime := time.Now()
 	startTime := time.Now().Add(time.Second * time.Duration(l.GetConfig().Period) * 2 * -1)
+
+	if err := validatePeriod(l.GetConfig().Period); err != nil {
+		return nil, err
+	}
+
 	id1, id2 := "e1", "e2"
 
 	output, err := l.Clients.Ccw.GetMetricData(context.TODO(), &cloudwatch.GetMetricDataInput{
@@ -129,7 +134,7 @@ func (l *Lambda) GetLastLambdaRun() (*domain.LambdaLastRun, error) {
 						},
 					}},
 			})
-			if err != nil {
+			if err != nil || len(output.MetricDataResults[0].Timestamps) == 0 || len(output.MetricDataResults[0].Values) == 0 {
 				logrus.Error("unable to get metric data, %v", err)
 				return nil, err
 			}
@@ -176,4 +181,18 @@ func (l *Lambda) GetLogsLastErrorRun() (string, error) {
 	}
 	return "", nil
 
+}
+
+func validatePeriod(period int32) error {
+	if period < 60 {
+		for _, p := range []int32{1, 5, 10, 30} {
+			if period == p {
+				return nil
+			}
+		}
+	}
+	if period%60 == 0 {
+		return nil
+	}
+	return errors.New("period must be a value in the set [ 1, 5, 10, 30 ] or any multiple of 60")
 }
