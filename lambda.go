@@ -24,7 +24,6 @@ type InitConfig struct {
 	Region           string
 	FunctionName     string
 	Period           int32
-	LogGroupName     string
 	FlagSearchPeriod bool
 }
 
