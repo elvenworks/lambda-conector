@@ -16,6 +16,7 @@ type LambdaConfig struct {
 	MetricErrors      string
 	MetricInvocations string
 	Stat              string
+	DimensionName     string
 	FlagSearchPeriod  bool
 }
 
