@@ -48,6 +48,7 @@ func InitLambda(config InitConfig) *Lambda {
 			MetricErrors:      "Errors",
 			MetricInvocations: "Invocations",
 			Stat:              "Sum",
+			DimensionName:     "FunctionName",
 			FlagSearchPeriod:  config.FlagSearchPeriod,
 		},
 	}
@@ -127,6 +128,12 @@ func (l *Lambda) GetInvocationsAndErrors(startTime time.Time, endTime time.Time,
 					Metric: &types.Metric{
 						MetricName: &l.GetConfig().MetricInvocations,
 						Namespace:  &l.GetConfig().Namespace,
+						Dimensions: []types.Dimension{
+							{
+								Name:  &l.GetConfig().DimensionName,
+								Value: &l.GetConfig().FunctionName,
+							},
+						},
 					},
 					Period: &period,
 					Stat:   &l.GetConfig().Stat,
@@ -138,6 +145,12 @@ func (l *Lambda) GetInvocationsAndErrors(startTime time.Time, endTime time.Time,
 					Metric: &types.Metric{
 						MetricName: &l.GetConfig().MetricErrors,
 						Namespace:  &l.GetConfig().Namespace,
+						Dimensions: []types.Dimension{
+							{
+								Name:  &l.GetConfig().DimensionName,
+								Value: &l.GetConfig().FunctionName,
+							},
+						},
 					},
 					Period: &period,
 					Stat:   &l.GetConfig().Stat,
